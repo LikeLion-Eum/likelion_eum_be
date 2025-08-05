@@ -4,6 +4,7 @@ import com.team.startupmatching.Specification.SpaceSpecification;
 import com.team.startupmatching.dto.SpaceResponse;
 import com.team.startupmatching.dto.SpaceSearchRequest;
 import com.team.startupmatching.entity.Space;
+import com.team.startupmatching.exception.RecruitmentException;
 import com.team.startupmatching.repository.SpaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,6 +19,10 @@ public class SpaceService {
     private final SpaceRepository spaceRepository;
 
     public List<SpaceResponse> searchSpaces(SpaceSearchRequest request) {
+
+        if (request.getLocation() == null || request.getLocation().isBlank()) {
+            throw new RecruitmentException("위치는 필수 검색 조건입니다.", "SPACE_LOCATION_REQUIRED");
+        }
         Specification<Space> spec = SpaceSpecification.search(request);
         List<Space> spaces = spaceRepository.findAll(spec);
 
