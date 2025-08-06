@@ -5,10 +5,9 @@ import com.team.startupmatching.dto.RecruitmentResponse;
 import com.team.startupmatching.service.RecruitmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/recruitment")
@@ -25,5 +24,15 @@ public class RecruitmentController {
     public ResponseEntity<RecruitmentResponse> createRecruitment(@RequestBody RecruitmentRequest request) {
         RecruitmentResponse response = recruitmentService.createRecruitment(request);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 모집글 검색(또는 전체 목록 조회) API
+     * GET /api/recruitment/list?keyword=신창
+     */
+    @GetMapping("/list")
+    public ResponseEntity<List<RecruitmentResponse>> searchRecruitments(@RequestParam(required = false) String keyword) {
+        List<RecruitmentResponse> result = recruitmentService.searchByKeyword(keyword);
+        return ResponseEntity.ok(result);
     }
 }

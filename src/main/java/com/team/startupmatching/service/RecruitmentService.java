@@ -1,14 +1,18 @@
 package com.team.startupmatching.service;
 
+import com.team.startupmatching.Specification.RecruitmentSpecification;
 import com.team.startupmatching.dto.RecruitmentRequest;
 import com.team.startupmatching.dto.RecruitmentResponse;
 import com.team.startupmatching.entity.Recruitment;
 import com.team.startupmatching.exception.RecruitmentException;
 import com.team.startupmatching.repository.RecruitmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 모집글 등록 서비스
@@ -57,4 +61,27 @@ public class RecruitmentService {
                 .createdAt(saved.getCreatedAt())
                 .build();
     }
+
+    public List<RecruitmentResponse> searchByKeyword(String keyword) {
+        Specification<Recruitment> spec = (root, query, cb) -> cb.conjunction();
+
+        if (keyword != null && !keyword.isBlank()) {
+            spec = spec.and(RecruitmentSpecification.containsKeywordEverywhere(keyword));
+        }
+
+        return recruitmentRepository.findAll(spec).stream()
+                .map((Recruitment recruitment) -> RecruitmentResponse.builder()
+                        .id(recruitment.getId())
+                        .title(recruitment.getTitle())
+                        .content(recruitment.getContent())
+                        .writer(recruitment.getWriter())
+                        .contact(recruitment.getContact())
+                        .spaceName(recruitment.getSpaceName())
+                        .spaceLocation(recruitment.getSpaceLocation())
+                        .createdAt(recruitment.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+
 }

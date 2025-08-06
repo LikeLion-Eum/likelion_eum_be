@@ -1,5 +1,6 @@
 package com.team.startupmatching.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
+@AllArgsConstructor
 public class RecruitmentResponse {
 
     private Long id;                   // 모집글 고유 ID
