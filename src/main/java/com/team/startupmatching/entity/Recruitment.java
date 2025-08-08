@@ -1,31 +1,54 @@
 package com.team.startupmatching.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.team.startupmatching.dto.common.SpaceType;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 기본 생성자
 @AllArgsConstructor
 @Builder
+@Entity
 public class Recruitment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;                    // 모집글 고유 ID (PK)
+    private Long id; // PK
 
-    private String title;              // 모집글 제목
-    private String content;            // 모집글 내용 (설명)
-    private String writer;             // 작성자 (사용자 이름 또는 닉네임)
-    private String contact;            // 연락처 (전화번호, 이메일 등)
+    @Column(nullable = false)
+    private String title;       // 제목 (필수)
 
-    private String spaceName;          // 모집하려는 공간 이름 (예: 카페 A)
-    private String spaceLocation;      // 공간 위치 (예: 충남 아산시 신창면)
+    private String location;    // 지역 (선택)
+    private String position;    // 직무 (선택)
+    private String skills;      // 기술 (선택)
+    private String career;      // 경력 (선택)
 
-    private LocalDateTime createdAt;   // 모집글 등록 시각
+    @Column(nullable = false)
+    private Long recruitCount;  // 모집 인원 (필수)
+
+    @Column(columnDefinition = "TEXT")
+    private String content;     // 상세 내용 (선택, TEXT)
+
+    @Column(nullable = false)
+    private Boolean isClosed;   // 마감 여부 (필수, 기본 false)
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt; // 등록 일시 (필수)
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;          // 작성자 (필수)
+
+    @PrePersist
+    void onCreate() {
+        if (isClosed == null) isClosed = false;
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_space_type", nullable = false)
+    private SpaceType targetSpaceType;
 }

@@ -1,24 +1,38 @@
 package com.team.startupmatching.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+
+
+import com.team.startupmatching.dto.common.SpaceType;
+import com.team.startupmatching.entity.Recruitment;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class RecruitmentResponse {
 
-    private Long id;                   // 모집글 고유 ID
-    private String title;             // 모집글 제목
-    private String content;           // 모집글 본문 내용
-    private String writer;            // 작성자 이름
-    private String contact;           // 연락처 정보
-    private String spaceName;         // 모집 관련 공간 이름
-    private String spaceLocation;     // 공간 위치 정보
-    private LocalDateTime createdAt;  // 모집글 등록 시각
+    private SpaceType targetSpaceType;
 
+    private Long id;               // PK
+    private String title;          // 제목
+    private String location;       // 지역
+    private String position;       // 직무
+    private String skills;         // 기술
+    private String career;         // 경력
+    private Long recruitCount;     // 모집 인원 수
+    private String content;        // 상세 내용
+    private Boolean isClosed;      // 마감 여부
+    private LocalDateTime createdAt; // 등록 일시
+    private Long userId;           // 작성자 FK
 
+    public static RecruitmentResponse from(Recruitment r){
+        return builder()
+                // ...
+                .targetSpaceType(r.getTargetSpaceType())
+                .build();
+    }
 }

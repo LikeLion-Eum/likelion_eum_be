@@ -2,6 +2,8 @@ package com.team.startupmatching.controller;
 
 import com.team.startupmatching.dto.RecruitmentRequest;
 import com.team.startupmatching.dto.RecruitmentResponse;
+import com.team.startupmatching.dto.RecruitmentSearchRequest;
+import com.team.startupmatching.dto.common.SpaceType;
 import com.team.startupmatching.service.RecruitmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,8 +33,14 @@ public class RecruitmentController {
      * GET /api/recruitment/list?keyword=신창
      */
     @GetMapping("/list")
-    public ResponseEntity<List<RecruitmentResponse>> searchRecruitments(@RequestParam(required = false) String keyword) {
-        List<RecruitmentResponse> result = recruitmentService.searchByKeyword(keyword);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<RecruitmentResponse>> listAll() {
+        return ResponseEntity.ok(recruitmentService.listAll());
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<List<RecruitmentResponse>> search(@RequestBody RecruitmentSearchRequest req) {
+        return ResponseEntity.ok(
+                recruitmentService.search(req.getKeyword(), req.getTargetSpaceType(), req.getKeywords())
+        );
     }
 }

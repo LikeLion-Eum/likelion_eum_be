@@ -1,22 +1,31 @@
 package com.team.startupmatching.dto;
 
+import com.team.startupmatching.dto.common.SpaceType;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Setter;
-
-@Setter
+/**
+ * 모집글 등록/수정 요청 DTO
+ * 엔티티 필드와 1:1 매핑 (+ userId는 FK 식별자)
+ */
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class RecruitmentRequest {
 
-    private String title;          // 모집글 제목 (예: "스터디 팀원 모집")
-    private String content;        // 모집글 본문 내용 (모집 목적, 시간, 조건 등)
-    private String writer;         // 작성자 이름 또는 닉네임
-    private String contact;        // 연락처 (전화번호 또는 이메일)
-    private String spaceName;      // 사용자가 모집하려는 공간 이름 (예: "카페 A")
-    private String spaceLocation;  // 공간 위치 (예: "충남 아산시 신창면")
+    private String title;       // 제목 (필수)
+    private String location;    // 지역
+    private String position;    // 직무
+    private String skills;      // 기술
+    private String career;      // 경력
+    private Long recruitCount;  // 모집 인원 수  (프로젝트 기준 Long로 통일)
+    private String content;     // 상세 내용
+    private Boolean isClosed;   // 마감 여부
+    private Long userId;        // 작성자 FK (필수)
 
-
+    @NotNull
+    private SpaceType targetSpaceType; // ✅ 드롭다운 값
 }
