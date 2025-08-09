@@ -1,10 +1,9 @@
-USE startup;
+
 
 -- 외래키 잠깐 해제
 SET FOREIGN_KEY_CHECKS = 0;
 
 TRUNCATE TABLE shared_office;
-TRUNCATE TABLE incubation_center;
 TRUNCATE TABLE recruitment;
 TRUNCATE TABLE `user`;  -- ✅ user는 예약어라 backtick 필요
 
@@ -18,13 +17,6 @@ INSERT INTO shared_office (name, description, room_count, size, location, max_co
 ('공유오피스 D', '대형 주차장을 보유한 공유 사무실', 12, 300, '충남 아산시 신창면 88', 60),
 ('공유오피스 E', '창업팀을 위한 맞춤형 사무공간', 7, 180, '충남 아산시 배방읍 광로 55', 35);
 
--- IncubationCenter 5개
-INSERT INTO incubation_center (description, region, site_url) VALUES
-('창업 지원 및 멘토링 제공', '충남 아산시', 'http://incubation-a.com'),
-('기술 창업 전문 센터', '충남 아산시', 'http://incubation-b.com'),
-('청년 창업 활성화를 위한 공간', '충남 아산시', 'http://incubation-c.com'),
-('정부 지원 창업 보육 센터', '충남 아산시', 'http://incubation-d.com'),
-('지역 특화 스타트업 지원 센터', '충남 아산시', 'http://incubation-e.com');
 
 -- User 5개 (예약어 backtick)
 INSERT INTO `user` (name, email, introduction, skills, career, location, resume_url) VALUES
