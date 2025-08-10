@@ -25,4 +25,21 @@ public interface IncubationCenterRepository
             LocalDate endInclusive,
             LocalDate startInclusive
     );
+
+    @org.springframework.data.jpa.repository.Query("""
+    select ic from IncubationCenter ic
+    where
+      ( :kw is null or :kw = '' or
+        lower(ic.title)        like lower(concat('%', :kw, '%')) or
+        lower(ic.supportField) like lower(concat('%', :kw, '%')) or
+        lower(ic.region)       like lower(concat('%', :kw, '%')) or
+        lower(ic.applyUrl)     like lower(concat('%', :kw, '%'))
+      )
+      and ( :recruiting is null or ic.recruiting = :recruiting )
+    """)
+    org.springframework.data.domain.Page<IncubationCenter> searchByKeyword(
+            @org.springframework.data.repository.query.Param("kw") String kw,
+            @org.springframework.data.repository.query.Param("recruiting") Boolean recruiting,
+            org.springframework.data.domain.Pageable pageable
+    );
 }

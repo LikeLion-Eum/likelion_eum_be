@@ -95,4 +95,23 @@ public class IncubationCenterService {
         return base.stream().map(IncubationCenterResponse::from).toList();
     }
 
+    public org.springframework.data.domain.Page<IncubationCenterResponse> searchKeyword(
+            String keyword, Boolean recruiting, org.springframework.data.domain.Pageable pageable) {
+
+        String kw = (keyword == null) ? "" : keyword.trim();
+        var page = incubationCenterRepository.searchByKeyword(kw, recruiting, pageable);
+
+        return page.map(ic -> new IncubationCenterResponse(
+                ic.getId(),
+                ic.getSourceId(),
+                ic.getTitle(),
+                ic.getRegion(),
+                ic.getSupportField(),
+                ic.getReceiptStartDate(),
+                ic.getReceiptEndDate(),
+                ic.isRecruiting(),
+                ic.getApplyUrl()
+        ));
+    }
+
 }
