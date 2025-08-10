@@ -39,15 +39,26 @@ public class IncubationCenterController {
      * recruiting: 모집중만(true/false)
      * openOn: 해당 날짜에 접수중인지( start <= openOn <= end )
      */
+    // IncubationCenterController.java
+
     @GetMapping("/search")
-    public List<IncubationCenterResponse> search(
-            @RequestParam(required = false) String region,
+    public org.springframework.data.domain.Page<IncubationCenterResponse> search(
+            @RequestParam("keyword") String keyword,
             @RequestParam(required = false) Boolean recruiting,
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate openOn
+            @org.springframework.data.web.PageableDefault(
+                    size = 20,
+                    sort = "receiptEndDate",
+                    direction = org.springframework.data.domain.Sort.Direction.ASC
+            ) org.springframework.data.domain.Pageable pageable
     ) {
-        return incubationCenterService.search(region, recruiting, openOn);
+        if (keyword == null || keyword.isBlank()) {
+            throw new IllegalArgumentException("keyword는 필수입니다.");
+            // 또는 return Page.empty(pageable);
+        }
+        return incubationCenterService.searchKeyword(keyword, recruiting, pageable);
     }
+
+
 
     // 엔드포인트 추가
     @PostMapping("/sync")
