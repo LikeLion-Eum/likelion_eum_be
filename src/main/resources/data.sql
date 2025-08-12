@@ -1,5 +1,3 @@
-
-
 -- 외래키 잠깐 해제
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -17,16 +15,15 @@ INSERT INTO shared_office (name, description, room_count, size, location, max_co
 ('공유오피스 D', '대형 주차장을 보유한 공유 사무실', 12, 300, '충남 아산시 신창면 88', 60),
 ('공유오피스 E', '창업팀을 위한 맞춤형 사무공간', 7, 180, '충남 아산시 배방읍 광로 55', 35);
 
+-- User 5개 (created_at, updated_at 포함)  ※ resumeUrl → DB 컬럼명은 resume_url
+INSERT INTO `user` (name, email, introduction, skills, career, location, resume_url, created_at, updated_at) VALUES
+('김철수', 'chulsoo@example.com', '웹 개발자 지망생', 'Java, Spring Boot', '신입', '충남 아산시', 'http://resume-chulsoo.com', NOW(), NOW()),
+('이영희', 'younghee@example.com', 'UI/UX 디자이너', 'Figma, Adobe XD', '3년', '충남 아산시', 'http://resume-younghee.com', NOW(), NOW()),
+('박민수', 'minsoo@example.com', '데이터 분석가', 'Python, SQL', '2년', '충남 아산시', 'http://resume-minsoo.com', NOW(), NOW()),
+('최지현', 'jihyun@example.com', 'AI 모델 개발자', 'Python, TensorFlow', '4년', '충남 아산시', 'http://resume-jihyun.com', NOW(), NOW()),
+('정우성', 'woosung@example.com', '백엔드 개발자', 'Node.js, MySQL', '신입', '충남 아산시', 'http://resume-woosung.com', NOW(), NOW());
 
--- User 5개 (예약어 backtick)
-INSERT INTO `user` (name, email, introduction, skills, career, location, resume_url) VALUES
-('김철수', 'chulsoo@example.com', '웹 개발자 지망생', 'Java, Spring Boot', '신입', '충남 아산시', 'http://resume-chulsoo.com'),
-('이영희', 'younghee@example.com', 'UI/UX 디자이너', 'Figma, Adobe XD', '3년', '충남 아산시', 'http://resume-younghee.com'),
-('박민수', 'minsoo@example.com', '데이터 분석가', 'Python, SQL', '2년', '충남 아산시', 'http://resume-minsoo.com'),
-('최지현', 'jihyun@example.com', 'AI 모델 개발자', 'Python, TensorFlow', '4년', '충남 아산시', 'http://resume-jihyun.com'),
-('정우성', 'woosung@example.com', '백엔드 개발자', 'Node.js, MySQL', '신입', '충남 아산시', 'http://resume-woosung.com');
-
-
+-- Recruitment 5개 (기존대로 created_at 지정)
 INSERT INTO recruitment
 (title, location, `position`, skills, career, recruit_count, content, is_closed, created_at, user_id, target_space_type)
 VALUES
