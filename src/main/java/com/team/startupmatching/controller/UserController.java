@@ -1,8 +1,9 @@
+// src/main/java/com/team/startupmatching/controller/UserController.java
 package com.team.startupmatching.controller;
-
 
 import com.team.startupmatching.dto.UserCreateRequest;
 import com.team.startupmatching.dto.UserPatchRequest;
+import com.team.startupmatching.dto.UserResponse;
 import com.team.startupmatching.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -21,18 +22,16 @@ public class UserController {
 
     // 생성
     @PostMapping
-    public ResponseEntity<IdRes> create(@Valid @RequestBody UserCreateRequest req) {
-        Long id = userService.create(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new IdRes(id));
+    public ResponseEntity<UserResponse> create(@Valid @RequestBody UserCreateRequest req) {
+        UserResponse body = userService.create(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
-    // 부분 수정 (null인 필드는 미변경)
+    // 부분 수정
     @PatchMapping("/{id}")
-    public ResponseEntity<IdRes> patch(@PathVariable long id,
-                                       @RequestBody UserPatchRequest req) {
-        Long updated = userService.patch(id, req);
-        return ResponseEntity.ok(new IdRes(updated));
+    public ResponseEntity<UserResponse> patch(@PathVariable long id,
+                                              @RequestBody UserPatchRequest req) {
+        UserResponse body = userService.patch(id, req);
+        return ResponseEntity.ok(body);
     }
-
-    private record IdRes(Long id) {}
 }
