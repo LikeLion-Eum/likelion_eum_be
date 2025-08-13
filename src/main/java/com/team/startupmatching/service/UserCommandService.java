@@ -1,16 +1,15 @@
 package com.team.startupmatching.service;
 
-import com.team.startupmatching.ai.client.AiClient;
-import com.team.startupmatching.ai.dto.AiUserSnapshot;
 import com.team.startupmatching.dto.UserUpsertRequest;
 import com.team.startupmatching.entity.User;
+import com.team.startupmatching.event.UserChangedEvent;
 import com.team.startupmatching.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,7 +19,7 @@ import java.util.List;
 public class UserCommandService {
 
     private final UserRepository userRepository;
-    private final AiClient aiClient;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public Long upsert(UserUpsertRequest dto) {
@@ -29,39 +28,26 @@ public class UserCommandService {
                 ? userRepository.findById(dto.getId()).orElseGet(User::new)
                 : new User();
 
-        // 2) 필드 매핑 (엔티티에 setter 있다고 가정)
+        // 2) 필드 매핑
         user.setName(dto.getName());
         user.setCareer(dto.getCareer());
         user.setIntroduction(dto.getIntroduction());
-        user.setSkills(dto.getSkills());         // "React, Spring" 형태 문자열
+        user.setSkills(dto.getSkills());   // "React, Spring" 형태 문자열
         user.setLocation(dto.getLocation());
         user.setResumeUrl(dto.getResumeUrl());
 
         // 3) 저장
         User saved = userRepository.save(user);
 
-        // 4) AI로 보낼 스냅샷 생성 (PII 제외 규칙은 네가 정한 필드 기준)
-        AiUserSnapshot snap = new AiUserSnapshot(
-                saved.getId(),
-                dto.getName(),
-                dto.getCareer(),
-                dto.getIntroduction(),
-                toList(dto.getSkills()),
-                dto.getLocation(),
-                dto.getResumeUrl()
-        );
+        // 4) 저장 성공 후, 커밋되면 전송되도록 이벤트 발행
+        publisher.publishEvent(new UserChangedEvent(saved.getId()));
+        log.debug("[EVENT] UserChangedEvent published userId={}", saved.getId());
 
-        // 5) 모의 AI로 업서트 (예외는 로그만)
-        try {
-            aiClient.upsertUsers(List.of(snap));
-            log.debug("[AI] upsert sent for userId={}", saved.getId());
-        } catch (Exception e) {
-            log.warn("[AI] upsert failed for userId={} err={}", saved.getId(), e.toString());
-        }
-
+        // (중요) 여기서는 aiClient를 직접 호출하지 않음. (중복 전송 방지)
         return saved.getId();
     }
 
+    // 필요시 CSV → List 변환 보조 (현재는 사용 X)
     private List<String> toList(String skills) {
         if (skills == null || skills.isBlank()) return List.of();
         return Arrays.stream(skills.split("[,/]"))

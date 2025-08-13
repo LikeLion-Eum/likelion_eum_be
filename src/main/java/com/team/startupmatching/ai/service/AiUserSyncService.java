@@ -16,16 +16,29 @@ import java.util.List;
 public class AiUserSyncService {
 
     private final UserRepository userRepository;
+    private final AiUserSnapshotMapper mapper;
     private final AiClient aiClient;
 
-    /** DB에 있는 userId를 조회해서 AI로 업서트 */
     @Transactional(readOnly = true)
-    public long syncOne(long userId) {
-        User u = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+    public void syncOne(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("user not found: " + userId));
+        aiClient.upsertOne(mapper.toSnapshot(user));
+    }
 
-        AiUserSnapshot snap = AiUserSnapshotMapper.from(u); // id, name, career, introduction, skills(list), location, resumUrl
-        aiClient.upsertUsers(List.of(snap));
-        return u.getId();
+    @Transactional(readOnly = true)
+    public void syncMany(List<Long> ids) {
+        var snapshots = userRepository.findAllById(ids).stream()
+                .map(mapper::toSnapshot)
+                .toList();
+        aiClient.upsertMany(snapshots);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AiUserSnapshot> listAllSnapshots() {
+        return userRepository.findAll()
+                .stream()
+                .map(mapper::toSnapshot)   // id,name,career,introduction,skills(String),location,resume_url
+                .toList();
     }
 }
