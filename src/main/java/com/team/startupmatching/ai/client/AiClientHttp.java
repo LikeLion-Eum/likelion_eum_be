@@ -2,6 +2,8 @@ package com.team.startupmatching.ai.client;
 
 
 import com.team.startupmatching.ai.config.AiProperties;
+import com.team.startupmatching.ai.dto.AiSharedOfficeSnapshot;
+import com.team.startupmatching.ai.dto.AiSharedOfficeUpsertRequest;
 import com.team.startupmatching.ai.dto.AiUpsertRequest;
 import com.team.startupmatching.ai.dto.AiUserSnapshot;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,31 @@ public class AiClientHttp implements AiClient {
         } catch (Exception e) {
             log.warn("[AI] upsertUsers failed: {}", e.toString());
             // MVP에선 삼키고 로그만. (나중엔 재시도 큐로 보내자)
+        }
+    }
+
+    @Override
+    public void upsertSharedOffices(List<AiSharedOfficeSnapshot> items) {
+        if (!props.isEnabled() || items == null || items.isEmpty()) return;
+
+        var req = AiSharedOfficeUpsertRequest.of(items); // 요청 객체 변경
+
+        try {
+            var client = webClientBuilder
+                    .baseUrl(Objects.requireNonNull(props.getBaseUrl(), "ai.base-url is null"))
+                    .build();
+
+            client.post()
+                    .uri(props.getUpsertPath()) // 경로는 일단 동일하게 사용
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(req)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block(Duration.ofMillis(props.getTimeoutMs()));
+
+            log.debug("[AI] upsertSharedOffices ok: items={}", items.size());
+        } catch (Exception e) {
+            log.warn("[AI] upsertSharedOffices failed: {}", e.toString());
         }
     }
 }

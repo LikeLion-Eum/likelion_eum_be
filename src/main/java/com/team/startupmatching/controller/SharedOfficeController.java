@@ -2,6 +2,7 @@ package com.team.startupmatching.controller;
 
 
 import com.team.startupmatching.dto.SharedOfficeCreateRequest;
+import com.team.startupmatching.dto.SharedOfficePatchRequest;
 import com.team.startupmatching.dto.SharedOfficeResponse;
 import com.team.startupmatching.service.SharedOfficeService;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,10 @@ public class SharedOfficeController {
     @GetMapping
     public List<SharedOfficeResponse> list() {
         return sharedOfficeService.list();
+    }
+
+    @PatchMapping("/{id}")
+    public SharedOfficeResponse patch(@PathVariable long id, @RequestBody SharedOfficePatchRequest request) {
+        return sharedOfficeService.patch(id, request);
     }
 }

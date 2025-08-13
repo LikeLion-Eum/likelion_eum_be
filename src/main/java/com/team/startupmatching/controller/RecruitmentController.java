@@ -36,11 +36,11 @@ public class RecruitmentController {
     public ResponseEntity<List<RecruitmentResponse>> listAll() {
         return ResponseEntity.ok(recruitmentService.listAll());
     }
-
     @PostMapping("/search")
     public ResponseEntity<List<RecruitmentResponse>> search(@RequestBody RecruitmentSearchRequest req) {
         return ResponseEntity.ok(
                 recruitmentService.search(req.getKeyword(), req.getTargetSpaceType(), req.getKeywords())
         );
     }
+
 }
