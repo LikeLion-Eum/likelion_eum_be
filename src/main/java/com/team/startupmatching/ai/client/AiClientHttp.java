@@ -1,50 +1,54 @@
 package com.team.startupmatching.ai.client;
 
-
 import com.team.startupmatching.ai.config.AiProperties;
-import com.team.startupmatching.ai.dto.AiUpsertRequest;
 import com.team.startupmatching.ai.dto.AiUserSnapshot;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AiClientHttp implements AiClient {
 
-    private final WebClient.Builder webClientBuilder;
+    private final WebClient aiWebClient;
     private final AiProperties props;
 
     @Override
-    public void upsertUsers(List<AiUserSnapshot> items) {
-        if (!props.isEnabled() || items == null || items.isEmpty()) return;
+    public void upsertOne(AiUserSnapshot snapshot) {
+        var spec = aiWebClient.post().uri(props.getUpsertPath());
 
-        var req = AiUpsertRequest.of(items);
-
-        try {
-            var client = webClientBuilder
-                    .baseUrl(Objects.requireNonNull(props.getBaseUrl(), "ai.base-url is null"))
-                    .build();
-
-            client.post()
-                    .uri(props.getUpsertPath())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(req)
-                    .retrieve()
-                    .toBodilessEntity()
-                    .block(Duration.ofMillis(props.getTimeoutMs()));
-
-            log.debug("[AI] upsertUsers ok: items={}", items.size());
-        } catch (Exception e) {
-            log.warn("[AI] upsertUsers failed: {}", e.toString());
-            // MVP에선 삼키고 로그만. (나중엔 재시도 큐로 보내자)
+        // ⬇️ yml에 auth-type이 있을 때만 헤더 부착
+        String t = props.getAuthType();
+        if ("x-api-key".equalsIgnoreCase(t)) {
+            spec.header("X-API-Key", props.getApiKey());
+        } else if ("bearer".equalsIgnoreCase(t)) {
+            spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + props.getApiKey());
         }
+
+        spec.bodyValue(snapshot)
+                .retrieve()
+                .toBodilessEntity()
+                .block(Duration.ofMillis(props.getTimeoutMs() != null ? props.getTimeoutMs() : 3000));
+    }
+
+    @Override
+    public void upsertMany(List<AiUserSnapshot> snapshots) {
+        var spec = aiWebClient.post().uri(props.getUpsertPath());
+
+        String t = props.getAuthType();
+        if ("x-api-key".equalsIgnoreCase(t)) {
+            spec.header("X-API-Key", props.getApiKey());
+        } else if ("bearer".equalsIgnoreCase(t)) {
+            spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + props.getApiKey());
+        }
+
+        spec.bodyValue(snapshots)
+                .retrieve()
+                .toBodilessEntity()
+                .block(Duration.ofMillis(props.getTimeoutMs() != null ? props.getTimeoutMs() : 3000));
     }
 }

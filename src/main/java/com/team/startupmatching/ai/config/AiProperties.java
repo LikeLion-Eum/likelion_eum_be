@@ -1,24 +1,19 @@
 package com.team.startupmatching.ai.config;
 
 
+
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+@Getter
+@Setter
 @ConfigurationProperties(prefix = "ai")
 public class AiProperties {
-    private boolean enabled = true;
-    private String baseUrl;
-    private String upsertPath;
-    private long timeoutMs = 3000;
-
-    public boolean isEnabled() { return enabled; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-
-    public String getBaseUrl() { return baseUrl; }
-    public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
-
-    public String getUpsertPath() { return upsertPath; }
-    public void setUpsertPath(String upsertPath) { this.upsertPath = upsertPath; }
-
-    public long getTimeoutMs() { return timeoutMs; }
-    public void setTimeoutMs(long timeoutMs) { this.timeoutMs = timeoutMs; }
+    private Boolean enabled;
+    private String baseUrl;     // 예: http://localhost:9000
+    private String upsertPath;  // 예: /v1/users/upsert
+    private Integer timeoutMs;  // 예: 3000
+    private String authType;    // "x-api-key" | "bearer" | null
+    private String apiKey;      // 헤더에 넣을 값
 }

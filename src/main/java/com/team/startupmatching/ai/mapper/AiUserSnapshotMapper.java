@@ -2,34 +2,32 @@ package com.team.startupmatching.ai.mapper;
 
 import com.team.startupmatching.ai.dto.AiUserSnapshot;
 import com.team.startupmatching.entity.User;
+import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.stream.Collectors;
 
+@Component
 public class AiUserSnapshotMapper {
 
-    /** User 엔티티 → AI로 보낼 스냅샷 */
-    public static AiUserSnapshot from(User u) {
+    public AiUserSnapshot toSnapshot(User user) {
         return new AiUserSnapshot(
-                u.getId(),
-                nullSafe(u.getName()),
-                nullSafe(u.getCareer()),
-                nullSafe(u.getIntroduction()),
-                toList(u.getSkills()),                  // "React, JS" → ["React","JS"]
-                nullSafe(u.getLocation()),
-                nullSafe(u.getResumeUrl())
+                user.getId(),
+                user.getName(),
+                user.getCareer(),
+                user.getIntroduction(),
+                normalizeSkills(user.getSkills()), // 엔티티 skills가 String(CSV)라고 가정
+                user.getLocation(),
+                user.getResumeUrl()
         );
     }
 
-    private static List<String> toList(String skills) {
-        if (skills == null || skills.isBlank()) return List.of();
-        return Arrays.stream(skills.split("[,/]"))
+    private String normalizeSkills(String raw) {
+        if (raw == null || raw.isBlank()) return "";
+        return Arrays.stream(raw.split("[,;/|，]"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .toList();
-    }
-
-    private static String nullSafe(String s) {
-        return (s == null) ? "" : s;
+                .distinct()
+                .collect(Collectors.joining(", "));
     }
 }
