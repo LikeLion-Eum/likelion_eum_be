@@ -1,6 +1,6 @@
 package com.team.startupmatching.controller;
 
-import com.team.startupmatching.ai.service.AiUserSyncService;
+import com.team.startupmatching.ai.service.AiIncubationCenterSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,10 +10,10 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/ai/users")
-public class AiUserSyncController {
+@RequestMapping("/api/ai/incubation-centers")
+public class AiIncubationCenterSyncController {
 
-    private final AiUserSyncService syncService;
+    private final AiIncubationCenterSyncService syncService;
 
     /** 단건 수동 업서트 트리거 */
     @PostMapping("/{id}/sync")

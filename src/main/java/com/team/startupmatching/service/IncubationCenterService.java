@@ -3,8 +3,10 @@ package com.team.startupmatching.service;
 import com.team.startupmatching.dto.IncubationCenterCreateRequest;
 import com.team.startupmatching.dto.IncubationCenterResponse;
 import com.team.startupmatching.entity.IncubationCenter;
+import com.team.startupmatching.event.IncubationCenterChangedEvent;
 import com.team.startupmatching.repository.IncubationCenterRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 public class IncubationCenterService {
 
     private final IncubationCenterRepository incubationCenterRepository;
+    private final ApplicationEventPublisher publisher;
 
     // 업서트(있으면 업데이트, 없으면 신규)
     public IncubationCenterResponse create(IncubationCenterCreateRequest request) {
@@ -26,7 +29,6 @@ public class IncubationCenterService {
 
         IncubationCenter entity = incubationCenterRepository.findBySourceId(sourceId)
                 .orElseGet(() -> IncubationCenter.builder().build());
-
 
         if (entity.getId() == null) {
             entity.setSourceId(sourceId);
@@ -41,6 +43,10 @@ public class IncubationCenterService {
         entity.setApplyUrl(nullToEmpty(request.getApplyUrl()));
 
         IncubationCenter saved = incubationCenterRepository.save(entity);
+
+        // ✅ 저장 성공 후 업서트 트리거 이벤트 발행 (리스너가 AFTER_COMMIT에서 처리)
+        publisher.publishEvent(new IncubationCenterChangedEvent(saved.getId()));
+
         return IncubationCenterResponse.from(saved);
     }
 
@@ -63,7 +69,7 @@ public class IncubationCenterService {
         return Objects.toString(v, "");
     }
 
-    // IncubationCenterService.java 내부
+    // 검색 (region/recruiting/openOn)
     @Transactional(readOnly = true)
     public List<IncubationCenterResponse> search(String region, Boolean recruiting, LocalDate openOn) {
         List<IncubationCenter> base;
