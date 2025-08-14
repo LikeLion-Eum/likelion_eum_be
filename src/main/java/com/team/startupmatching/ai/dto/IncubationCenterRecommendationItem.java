@@ -7,7 +7,7 @@ public record IncubationCenterRecommendationItem(
         String title,
         String region,
         @JsonProperty("support_field") String supportField,
-        @JsonProperty("end_date") java.time.LocalDate endDate,
+        @JsonProperty("end_date") String endDate,        // ← LocalDate → String 로 변경
         @JsonProperty("apply_url") String applyUrl,
         String reason
 ) {}
