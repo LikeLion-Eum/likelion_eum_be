@@ -1,5 +1,6 @@
 package com.team.startupmatching.ai.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.startupmatching.ai.config.AiProperties;
 import com.team.startupmatching.ai.dto.AiIncubationCenterSnapshot;
 import com.team.startupmatching.ai.dto.AiUserSnapshot;
@@ -7,9 +8,13 @@ import com.team.startupmatching.ai.dto.IncubationCenterRecommendationItem;
 import com.team.startupmatching.ai.dto.RecommendRequest;
 import com.team.startupmatching.ai.dto.UserRecommendationItem;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
@@ -20,6 +25,9 @@ public class AiClientHttp implements AiClient {
 
     private final WebClient aiWebClient;
     private final AiProperties props;
+    private static final Logger log = LoggerFactory.getLogger(AiClientHttp.class);
+    private final ObjectMapper objectMapper;
+
 
     private WebClient.RequestBodySpec postWithAuth(String path) {
         WebClient.RequestBodySpec spec = aiWebClient.post().uri(path);
@@ -47,9 +55,21 @@ public class AiClientHttp implements AiClient {
     @Override
     public void upsertIncubationCenter(AiIncubationCenterSnapshot snapshot) {
         int ms = props.getTimeoutMs() != null ? props.getTimeoutMs() : 3000;
+
+        try {
+            log.info("[AI UPSERT IC] payload={}", objectMapper.writeValueAsString(snapshot));
+        } catch (Exception ignore) { }
+
         postWithAuth(props.getIncubationCentersUpsertPath())
                 .bodyValue(snapshot)
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, resp ->
+                        resp.bodyToMono(String.class).defaultIfEmpty("")
+                                .flatMap(body -> {
+                                    log.warn("[AI UPSERT IC] failed status={} body={}", resp.statusCode(), body);
+                                    return Mono.error(new RuntimeException("AI upsert error: " + resp.statusCode() + " " + body));
+                                })
+                )
                 .toBodilessEntity()
                 .block(Duration.ofMillis(ms));
     }

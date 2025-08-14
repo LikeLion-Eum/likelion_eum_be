@@ -22,7 +22,7 @@ public class User {
     @Column(nullable = false)
     private String name; // 이름 (필수)
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email; // 이메일 (필수)
 
     @Column(columnDefinition = "TEXT")
