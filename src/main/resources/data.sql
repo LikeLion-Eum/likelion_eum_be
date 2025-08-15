@@ -7,13 +7,14 @@ TRUNCATE TABLE `user`;  -- ✅ user는 예약어라 backtick 필요
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- SharedOffice 5개
+-- SharedOffice 6개
 INSERT INTO shared_office (name, description, room_count, size, location, max_count) VALUES
 ('공유오피스 A', '아산시 중심부에 위치한 최신 공유오피스', 10, 200, '충남 아산시 중앙로 123', 50),
 ('공유오피스 B', '조용한 분위기의 스터디 및 사무공간', 5, 120, '충남 아산시 배방로 45', 20),
 ('공유오피스 C', '회의실과 카페가 함께 있는 오피스', 8, 150, '충남 아산시 온천대로 200', 40),
 ('공유오피스 D', '대형 주차장을 보유한 공유 사무실', 12, 300, '충남 아산시 신창면 88', 60),
-('공유오피스 E', '창업팀을 위한 맞춤형 사무공간', 7, 180, '충남 아산시 배방읍 광로 55', 35);
+('공유오피스 E', '창업팀을 위한 맞춤형 사무공간', 7, 180, '충남 아산시 배방읍 광로 55', 35),
+('공유오피스 F', '번화가 주변에 위치한 오피스', 4, 100, '서울 강남구 번화로 15', 30);
 
 -- User 5개 (created_at, updated_at 포함)  ※ resumeUrl → DB 컬럼명은 resume_url
 INSERT INTO `user` (name, email, introduction, skills, career, location, resume_url, created_at, updated_at) VALUES
