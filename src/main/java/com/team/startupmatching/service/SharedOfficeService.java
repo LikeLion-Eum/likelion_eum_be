@@ -2,11 +2,13 @@ package com.team.startupmatching.service;
 
 
 import com.team.startupmatching.dto.SharedOfficeCreateRequest;
+import com.team.startupmatching.dto.SharedOfficeRecommendResponse;
 import com.team.startupmatching.dto.SharedOfficeResponse;
 import com.team.startupmatching.entity.SharedOffice;
 import com.team.startupmatching.repository.SharedOfficeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,6 +51,15 @@ public class SharedOfficeService {
                         so.getSize(),
                         so.getMaxCount()
                 ))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SharedOfficeRecommendResponse> recommendByLocation(String location) {
+        List<SharedOffice> foundOffices = sharedOfficeRepository.findByLocationContainingIgnoreCase(location);
+
+        return foundOffices.stream()
+                .map(SharedOfficeRecommendResponse::from)
                 .collect(Collectors.toList());
     }
 }
