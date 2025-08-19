@@ -1,21 +1,40 @@
 package com.team.startupmatching.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
-@NoArgsConstructor      // 기본 생성자
-@AllArgsConstructor     // 모든 필드 생성자
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class SharedOfficeCreateRequest {
 
-    private String name;        // 공간 이름
-    private String description; // 공간 소개
-    private Long roomCount;  // 공간 개수
-    private Long size;       // 전체 크기
-    private String location;    // 위치
-    private Long maxCount;   // 최대 수용 인원
+    // 기본 정보
+    @NotBlank private String name;
+    @NotBlank private String location;
+    @NotNull private Long roomCount;
+    @NotNull private Long size;
+    @NotNull private Long maxCount;
+    private String description;
+
+    // 호스트 정보
+    @NotBlank private String hostBusinessName;          // 공간상호
+    @NotBlank private String hostRepresentativeName;    // 대표자명
+    @NotBlank private String hostAddress;               // 소재지
+
+    // ✅ 하이픈 선택 입력 허용 (예: 1234567890 또는 123-45-67890)
+    @NotBlank
+    @Pattern(
+            regexp = "^\\d{3}-?\\d{2}-?\\d{5}$",
+            message = "사업자번호는 10자리 숫자이며 하이픈은 선택입니다. 예) 1234567890 또는 123-45-67890"
+    )
+    private String businessRegistrationNumber;
+
+    // ✅ 휴대폰/유선 공통, 하이픈 선택 (예: 01012345678, 010-1234-5678, 02-123-4567 등)
+    @NotBlank
+    @Pattern(
+            regexp = "^(01[016789]-?\\d{3,4}-?\\d{4}|0\\d{1,2}-?\\d{3,4}-?\\d{4})$",
+            message = "연락처 형식이 올바르지 않습니다. 하이픈은 선택입니다."
+    )
+    private String hostContact;
 }

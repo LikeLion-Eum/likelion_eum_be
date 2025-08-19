@@ -1,9 +1,8 @@
 package com.team.startupmatching.service;
 
-import com.team.startupmatching.Specification.RecruitmentSpecification;
-import com.team.startupmatching.dto.common.SpaceType;              // ✅ enum 경로 여기로 통일!
 import com.team.startupmatching.dto.RecruitmentRequest;
 import com.team.startupmatching.dto.RecruitmentResponse;
+import com.team.startupmatching.dto.IncubationCenterCreateRequest;
 import com.team.startupmatching.entity.Recruitment;
 import com.team.startupmatching.entity.User;
 import com.team.startupmatching.exception.RecruitmentException;
@@ -20,7 +19,6 @@ import java.util.List;
 
 import static com.team.startupmatching.Specification.RecruitmentSpecification.containsAllKeywords;
 import static com.team.startupmatching.Specification.RecruitmentSpecification.containsKeywordEverywhere;
-import static com.team.startupmatching.Specification.RecruitmentSpecification.hasTargetSpaceType;
 
 @Service
 @RequiredArgsConstructor
@@ -38,9 +36,6 @@ public class RecruitmentService {
         if (request.getUserId() == null) {
             throw new RecruitmentException("작성자(userId)는 필수입니다.", "RECRUITMENT_USER_MISSING");
         }
-        if (request.getTargetSpaceType() == null) {
-            throw new RecruitmentException("대상 공간 종류(targetSpaceType)는 필수입니다.", "RECRUITMENT_TARGET_SPACE_TYPE_MISSING");
-        }
 
         User writer = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RecruitmentException("존재하지 않는 사용자입니다.", "USER_NOT_FOUND"));
@@ -56,7 +51,6 @@ public class RecruitmentService {
                 .isClosed(request.getIsClosed() != null ? request.getIsClosed() : Boolean.FALSE)
                 .createdAt(LocalDateTime.now())
                 .user(writer)
-                .targetSpaceType(request.getTargetSpaceType())   // ✅ enum 저장
                 .build();
 
         Recruitment saved = recruitmentRepository.save(recruitment);
@@ -73,11 +67,10 @@ public class RecruitmentService {
                 .isClosed(saved.getIsClosed())
                 .createdAt(saved.getCreatedAt())
                 .userId(saved.getUser().getId())
-                .targetSpaceType(saved.getTargetSpaceType())     // ✅ 응답 포함
                 .build();
     }
 
-    /** ✅ 전체 목록 (정렬: 최신순) */
+    /** 전체 목록 (정렬: 최신순) */
     @Transactional(readOnly = true)
     public List<RecruitmentResponse> listAll() {
         return recruitmentRepository
@@ -95,31 +88,23 @@ public class RecruitmentService {
                         .isClosed(r.getIsClosed())
                         .createdAt(r.getCreatedAt())
                         .userId(r.getUser() != null ? r.getUser().getId() : null)
-                        .targetSpaceType(r.getTargetSpaceType())
                         .build())
                 .toList();
     }
 
-    /** ✅ JSON 검색(문자열 키워드 AND + enum), 배열 버전으로 확장된 메인 */
+    /** 검색: 키워드 배열(AND) 또는 단일 문자열(공백 split AND) */
     @Transactional(readOnly = true)
-    public List<RecruitmentResponse> search(String keyword, SpaceType targetSpaceType, List<String> keywords) {
+    public List<RecruitmentResponse> search(String keyword, List<String> keywords) {
         Specification<Recruitment> spec = (root, query, cb) -> cb.conjunction();
 
-        // 1) 키워드 배열이 우선 (각 항목 AND)
         if (keywords != null && !keywords.isEmpty()) {
             for (String kw : keywords) {
                 if (kw != null && !kw.isBlank()) {
                     spec = spec.and(containsKeywordEverywhere(kw.trim()));
                 }
             }
-            // 2) 없으면 문자열 하나로 처리 (공백 split AND)
         } else if (keyword != null && !keyword.isBlank()) {
             spec = spec.and(containsAllKeywords(keyword));
-        }
-
-        // 3) enum 필터(옵션)
-        if (targetSpaceType != null) {
-            spec = spec.and(hasTargetSpaceType(targetSpaceType));
         }
 
         return recruitmentRepository
@@ -137,14 +122,13 @@ public class RecruitmentService {
                         .isClosed(r.getIsClosed())
                         .createdAt(r.getCreatedAt())
                         .userId(r.getUser() != null ? r.getUser().getId() : null)
-                        .targetSpaceType(r.getTargetSpaceType())
                         .build())
                 .toList();
     }
 
-    /** ✅ (호환용) 예전 2파라미터 시그니처 → 새 메서드로 위임 */
+    /** (호환용, 필요 없으면 삭제 가능) */
     @Transactional(readOnly = true)
-    public List<RecruitmentResponse> search(String keyword, SpaceType targetSpaceType) {
-        return search(keyword, targetSpaceType, null);
+    public List<RecruitmentResponse> search(String keyword) {
+        return search(keyword, null);
     }
 }
