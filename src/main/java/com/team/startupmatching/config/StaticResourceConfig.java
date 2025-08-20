@@ -11,13 +11,14 @@ import java.nio.file.Paths;
 public class StaticResourceConfig implements WebMvcConfigurer {
 
     @Value("${storage.local.base-dir:uploads}")
-    private String baseDir; // 예: uploads
+    private String baseDir; // 예: uploads  (실제 디스크: {프로젝트}/uploads)
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // http://localhost:8080/uploads/**  →  file:{baseDir}/**
-        String location = "file:" + Paths.get(baseDir).toAbsolutePath().normalize().toString() + "/";
+        // /uploads/**  →  file:{abs(baseDir)}/**
+        String location = Paths.get(baseDir).toAbsolutePath().normalize().toUri().toString(); // file:/.../uploads/
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(location);
+                .addResourceLocations(location)
+                .setCachePeriod(0); // 개발 중 캐시 끔(운영 시 조정 가능)
     }
 }

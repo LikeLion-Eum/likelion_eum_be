@@ -32,13 +32,9 @@ public class SharedOfficePhoto {
     @JoinColumn(name = "shared_office_id", nullable = false)
     private SharedOffice sharedOffice;
 
-    // 실제 저장 키(로컬 경로 or S3 key)
+    // 파일의 상대 경로 또는 S3 오브젝트 키 (예: uploads/shared-office/{officeId}/{uuid}.jpg)
     @Column(name = "storage_key", nullable = false, length = 512)
     private String storageKey;
-
-    // 프론트가 사용하는 공개 URL
-    @Column(name = "image_url", nullable = false, length = 512)
-    private String imageUrl;
 
     // 정렬용(0부터)
     @Column(nullable = false)
@@ -60,5 +56,12 @@ public class SharedOfficePhoto {
     void onCreate() {
         if (isMain == null) isMain = false;
         if (seq == null) seq = 0;
+    }
+
+    /** 프론트로 보낼 상대 URL이 필요할 때 사용: "/uploads/..." 형태 */
+    @Transient
+    public String getRelativeUrl() {
+        if (storageKey == null || storageKey.isBlank()) return null;
+        return storageKey.startsWith("/") ? storageKey : "/" + storageKey;
     }
 }

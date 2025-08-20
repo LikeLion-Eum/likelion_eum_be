@@ -9,6 +9,7 @@ import com.team.startupmatching.repository.SharedOfficePhotoRepository;
 import com.team.startupmatching.repository.SharedOfficeRepository;
 import com.team.startupmatching.storage.StoragePort;
 import com.team.startupmatching.storage.StorageResult;
+import com.team.startupmatching.support.PublicUrlBuilder;   // 🔹 추가
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class SharedOfficePhotoService {
     private final SharedOfficeRepository officeRepo;
     private final SharedOfficePhotoRepository photoRepo;
     private final StoragePort storagePort;
+    private final PublicUrlBuilder publicUrlBuilder;       // 🔹 추가
 
     @Transactional
     public UploadPhotosResponse uploadPhotos(Long officeId, List<MultipartFile> files, List<String> captions) {
@@ -45,14 +47,14 @@ public class SharedOfficePhotoService {
             MultipartFile f = files.get(i);
             validateFile(f);
 
+            // 스토리지 저장 → key만 사용 (절대 URL 저장 금지)
             StorageResult sr = storagePort.upload(officeId.toString(), f);
 
             SharedOfficePhoto p = SharedOfficePhoto.builder()
                     .sharedOffice(office)
-                    .storageKey(sr.key())
-                    .imageUrl(sr.url())
-                    .seq(nextSeq + i)                 // max(seq)+1부터 할당 → UNIQUE 충돌 방지
-                    .isMain(!hasMain && i == 0)       // 첫 업로드면 대표 지정
+                    .storageKey(sr.key())                // 예: shared-office/{id}/{uuid}.jpg
+                    .seq(nextSeq + i)
+                    .isMain(!hasMain && i == 0)          // 첫 업로드면 대표 지정
                     .caption(captions != null && captions.size() > i ? captions.get(i) : null)
                     .build();
             toSave.add(p);
@@ -123,7 +125,6 @@ public class SharedOfficePhotoService {
                 photoRepo.save(first);
             }
         }
-        // 필요하면 여기에서 seq를 0..N으로 재정렬 가능(필수는 아님)
     }
 
     /* helper */
@@ -136,13 +137,14 @@ public class SharedOfficePhotoService {
         if (ext == null || !ALLOWED_EXT.contains(ext)) {
             throw new IllegalArgumentException("허용되지 않는 확장자입니다. (jpg, jpeg, png, webp)");
         }
-        // 필요 시 Content-Type 검증 추가 가능
     }
 
     private PhotoItemResponse toDto(SharedOfficePhoto p) {
+        String absUrl = publicUrlBuilder.build(p.getStorageKey()); // 🔹 절대 URL 생성
+
         return PhotoItemResponse.builder()
                 .photoId(p.getId())
-                .url(p.getImageUrl())
+                .url(absUrl)
                 .seq(p.getSeq())
                 .isMain(p.getIsMain())
                 .caption(p.getCaption())
