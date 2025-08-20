@@ -1,0 +1,15 @@
+.git
+.gitignore
+.gradle
+build
+out
+*.iml
+.idea
+.DS_Store
+
+# 환경/시크릿
+.env
+*.env
+
+# 업로드/임시 파일(이미지 부풀림 방지)
+uploads/
