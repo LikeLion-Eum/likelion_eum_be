@@ -3,21 +3,20 @@ package com.team.startupmatching.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 기본 생성자
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Entity
+@Table(name = "shared_office")
 public class SharedOffice {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 기본 정보
     @Column(nullable = false)
     private String name;
 
@@ -33,6 +32,16 @@ public class SharedOffice {
     @Column(nullable = false)
     private Long maxCount;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String description;
+
+    // 호스트 정보 (공간상호/소재지 제거됨)
+    @Column(name = "host_representative_name", nullable = false, length = 50)
+    private String hostRepresentativeName;      // 대표자명
+
+    @Column(name = "business_registration_number", nullable = false, length = 12)
+    private String businessRegistrationNumber;  // 숫자만 저장(10자리) or 하이픈 포함 최대 12
+
+    @Column(name = "host_contact", nullable = false, length = 30)
+    private String hostContact;                 // 연락처(숫자만 저장 권장)
 }

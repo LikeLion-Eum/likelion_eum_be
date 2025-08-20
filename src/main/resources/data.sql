@@ -1,8 +1,8 @@
 -- 외래키 잠깐 해제
 SET FOREIGN_KEY_CHECKS = 0;
 
-TRUNCATE TABLE shared_office;
-TRUNCATE TABLE recruitment;
+--TRUNCATE TABLE shared_office;
+--TRUNCATE TABLE recruitment;
 TRUNCATE TABLE `user`;  -- ✅ user는 예약어라 backtick 필요
 
 SET FOREIGN_KEY_CHECKS = 1;

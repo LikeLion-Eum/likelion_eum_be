@@ -1,6 +1,5 @@
 package com.team.startupmatching.Specification;
 
-import com.team.startupmatching.dto.common.SpaceType;
 import com.team.startupmatching.entity.Recruitment;
 import com.team.startupmatching.entity.User;
 import org.springframework.data.jpa.domain.Specification;
@@ -41,8 +40,8 @@ public class RecruitmentSpecification {
     }
 
     /**
-     * 공백으로 나눈 여러 키워드를 모두 포함하도록(and) 검색하고 싶을 때 사용
-     * 예) "신창 프론트" → 신창도 포함 & 프론트도 포함
+     * 공백으로 나눈 여러 키워드를 모두 포함(and) 검색
+     * 예) "신창 프론트" → 신창 포함 & 프론트 포함
      */
     public static Specification<Recruitment> containsAllKeywords(String keywords) {
         if (keywords == null || keywords.isBlank()) {
@@ -51,17 +50,12 @@ public class RecruitmentSpecification {
 
         String[] parts = keywords.trim().split("\\s+");
 
-        // ✅ where(null) 대신, 빈 스펙(항상 참)에서 시작
+        // 빈 스펙(항상 참)에서 시작
         Specification<Recruitment> spec = (root, query, cb) -> cb.conjunction();
 
         for (String part : parts) {
             spec = spec.and(containsKeywordEverywhere(part));
         }
         return spec;
-    }
-
-    public static Specification<Recruitment> hasTargetSpaceType(SpaceType type) {
-        return (root, query, cb) ->
-                (type == null) ? cb.conjunction() : cb.equal(root.get("targetSpaceType"), type);
     }
 }

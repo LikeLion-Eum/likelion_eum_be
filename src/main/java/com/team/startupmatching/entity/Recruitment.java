@@ -1,6 +1,5 @@
 package com.team.startupmatching.entity;
 
-import com.team.startupmatching.dto.common.SpaceType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,8 +46,4 @@ public class Recruitment {
         if (isClosed == null) isClosed = false;
         if (createdAt == null) createdAt = LocalDateTime.now();
     }
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_space_type", nullable = false)
-    private SpaceType targetSpaceType;
 }

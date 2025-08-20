@@ -1,8 +1,5 @@
 package com.team.startupmatching.dto;
 
-
-
-import com.team.startupmatching.dto.common.SpaceType;
 import com.team.startupmatching.entity.Recruitment;
 import lombok.*;
 
@@ -14,8 +11,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class RecruitmentResponse {
-
-    private SpaceType targetSpaceType;
 
     private Long id;               // PK
     private String title;          // 제목
@@ -29,10 +24,19 @@ public class RecruitmentResponse {
     private LocalDateTime createdAt; // 등록 일시
     private Long userId;           // 작성자 FK
 
-    public static RecruitmentResponse from(Recruitment r){
-        return builder()
-                // ...
-                .targetSpaceType(r.getTargetSpaceType())
+    public static RecruitmentResponse from(Recruitment r) {
+        return RecruitmentResponse.builder()
+                .id(r.getId())
+                .title(r.getTitle())
+                .location(r.getLocation())
+                .position(r.getPosition())
+                .skills(r.getSkills())
+                .career(r.getCareer())
+                .recruitCount(r.getRecruitCount())
+                .content(r.getContent())
+                .isClosed(r.getIsClosed())          // 필드명이 isClosed라면 getter는 getIsClosed()
+                .createdAt(r.getCreatedAt())
+                .userId(r.getUser() != null ? r.getUser().getId() : null)
                 .build();
     }
 }
