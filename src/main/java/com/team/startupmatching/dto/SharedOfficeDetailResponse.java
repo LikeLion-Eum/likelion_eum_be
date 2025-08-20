@@ -28,9 +28,7 @@ public class SharedOfficeDetailResponse {
     private List<PhotoItemResponse> photos;   // 전체 사진(seq ASC)
 
     // === 호스트 정보(신규) ===
-    private String hostBusinessName;           // 공간상호
     private String hostRepresentativeName;     // 대표자명
-    private String hostAddress;                // 소재지
     private String businessRegistrationNumber; // 사업자번호(표시는 123-45-67890처럼)
     private String hostContact;                // 연락처(표시는 010-1234-5678처럼)
 }

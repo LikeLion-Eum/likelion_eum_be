@@ -27,7 +27,7 @@ public class SharedOfficeService {
 
     private final SharedOfficeRepository sharedOfficeRepository;
     private final SharedOfficePhotoRepository photoRepo;
-    private final PublicUrlBuilder publicUrlBuilder; // 🔹 추가: 절대 URL 생성기
+    private final PublicUrlBuilder publicUrlBuilder;
 
     // 등록
     @Transactional
@@ -36,15 +36,15 @@ public class SharedOfficeService {
         String phone     = digitsOnly(request.getHostContact());
 
         SharedOffice sharedOffice = SharedOffice.builder()
+                // 기본 정보
                 .name(request.getName())
                 .description(request.getDescription())
                 .roomCount(request.getRoomCount())
                 .size(request.getSize())
                 .location(request.getLocation())
                 .maxCount(request.getMaxCount())
-                .hostBusinessName(request.getHostBusinessName())
+                // 호스트 정보(공간상호/소재지 제거됨)
                 .hostRepresentativeName(request.getHostRepresentativeName())
-                .hostAddress(request.getHostAddress())
                 .businessRegistrationNumber(bizNumber)
                 .hostContact(phone)
                 .build();
@@ -60,7 +60,7 @@ public class SharedOfficeService {
         );
     }
 
-    // 단건 조회
+    // 단건 조회 (상세)
     @Transactional(readOnly = true)
     public SharedOfficeDetailResponse getOne(Long id) {
         SharedOffice so = sharedOfficeRepository.findById(id)
@@ -75,13 +75,12 @@ public class SharedOfficeService {
                 .findFirst()
                 .orElse(photos.isEmpty() ? null : photos.get(0));
 
-        // 🔹 절대 URL로 변환
         String mainPhotoUrl = main == null ? null : publicUrlBuilder.build(main.getStorageKey());
 
         List<PhotoItemResponse> photoDtos = photos.stream()
                 .map(p -> PhotoItemResponse.builder()
                         .photoId(p.getId())
-                        .url(publicUrlBuilder.build(p.getStorageKey())) // 🔹 절대 URL
+                        .url(publicUrlBuilder.build(p.getStorageKey()))
                         .seq(p.getSeq())
                         .isMain(p.getIsMain())
                         .caption(p.getCaption())
@@ -100,17 +99,16 @@ public class SharedOfficeService {
                 .location(so.getLocation())
                 .maxCount(so.getMaxCount())
                 .facilities(Collections.emptyList())
-                .mainPhotoUrl(mainPhotoUrl)      // 🔹 절대 URL
-                .photos(photoDtos)               // 🔹 절대 URL
-                .hostBusinessName(so.getHostBusinessName())
+                .mainPhotoUrl(mainPhotoUrl)
+                .photos(photoDtos)
+                // 호스트 정보(공간상호/소재지 제거)
                 .hostRepresentativeName(so.getHostRepresentativeName())
-                .hostAddress(so.getHostAddress())
                 .businessRegistrationNumber(formattedBiz)
                 .hostContact(formattedTel)
                 .build();
     }
 
-    // 목록 조회 (기존 그대로)
+    // 목록 조회
     @Transactional(readOnly = true)
     public List<SharedOfficeResponse> list() {
         return sharedOfficeRepository.findAll().stream()
@@ -124,7 +122,7 @@ public class SharedOfficeService {
                 .collect(Collectors.toList());
     }
 
-    // 지역 기반 추천(간단 검색)
+    // 지역 기반 추천
     @Transactional(readOnly = true)
     public List<SharedOfficeRecommendResponse> recommendByLocation(String location) {
         List<SharedOffice> foundOffices =

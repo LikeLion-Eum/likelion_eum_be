@@ -18,9 +18,7 @@ public class SharedOfficeCreateRequest {
     private String description;
 
     // 호스트 정보
-    @NotBlank private String hostBusinessName;          // 공간상호
     @NotBlank private String hostRepresentativeName;    // 대표자명
-    @NotBlank private String hostAddress;               // 소재지
 
     // ✅ 하이픈 선택 입력 허용 (예: 1234567890 또는 123-45-67890)
     @NotBlank
