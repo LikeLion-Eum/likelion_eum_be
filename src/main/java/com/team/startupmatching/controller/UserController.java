@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
@@ -32,6 +34,19 @@ public class UserController {
     public ResponseEntity<UserResponse> patch(@PathVariable long id,
                                               @RequestBody UserPatchRequest req) {
         UserResponse body = userService.patch(id, req);
+        return ResponseEntity.ok(body);
+    }
+
+    // 🔍 단건 조회
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getOne(@PathVariable long id) {
+        UserResponse body = userService.getOne(id);
+        return ResponseEntity.ok(body);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserResponse>> getAll() {
+        List<UserResponse> body = userService.getAll();
         return ResponseEntity.ok(body);
     }
 
