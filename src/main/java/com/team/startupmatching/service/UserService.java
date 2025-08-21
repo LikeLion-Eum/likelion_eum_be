@@ -12,6 +12,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -52,5 +54,18 @@ public class UserService {
         User saved = userRepository.save(u);               // updatedAt 자동 갱신
         publisher.publishEvent(new UserChangedEvent(saved.getId())); // AFTER_COMMIT
         return UserResponse.from(saved);
+    }
+
+    public UserResponse getOne(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return UserResponse.from(user);
+    }
+
+    public List<UserResponse> getAll() {
+        return userRepository.findAll()
+                .stream()
+                .map(UserResponse::from)
+                .toList();
     }
 }
