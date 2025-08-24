@@ -46,4 +46,6 @@ public class Recruitment {
         if (isClosed == null) isClosed = false;
         if (createdAt == null) createdAt = LocalDateTime.now();
     }
+
+
 }

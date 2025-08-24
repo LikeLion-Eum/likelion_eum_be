@@ -7,8 +7,10 @@ import com.team.startupmatching.event.IncubationCenterChangedEvent;
 import com.team.startupmatching.repository.IncubationCenterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -118,6 +120,24 @@ public class IncubationCenterService {
                 ic.isRecruiting(),
                 ic.getApplyUrl()
         ));
+    }
+
+    @Transactional(readOnly = true)
+    public IncubationCenterResponse getOne(Long id) {
+        var e = incubationCenterRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "incubation-center not found: " + id));
+
+        // 엔티티 -> 응답 DTO 매핑 (필드명은 프로젝트에 맞게 조정)
+        return IncubationCenterResponse.builder()
+                .id(e.getId())
+                .title(e.getTitle())
+                .region(e.getRegion())
+                .supportField(e.getSupportField())
+                .applyUrl(e.getApplyUrl())
+                .receiptStartDate(e.getReceiptStartDate())
+                .receiptEndDate(e.getReceiptEndDate())
+                .recruiting(e.isRecruiting())
+                .build();
     }
 
 }

@@ -32,7 +32,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/recruitments/*/love-calls",
                                 "/api/me/love-calls/**"
-                        ).authenticated()
+                        ).permitAll()
 
                         // 그 외는 전부 허용 (기존 기능 안 막힘)
                         .anyRequest().permitAll()

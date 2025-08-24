@@ -12,6 +12,13 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
+// ★ 추가
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
+import org.springframework.util.StringUtils;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/incubation-centers")
@@ -19,7 +26,6 @@ public class IncubationCenterController {
 
     private final IncubationCenterService incubationCenterService;
     private final KStartupImportService kStartupImportService;
-
 
     /** 업서트(있으면 업데이트, 없으면 신규) */
     @PostMapping
@@ -35,30 +41,21 @@ public class IncubationCenterController {
 
     /**
      * 검색 - 파라미터 모두 선택사항
-     * region: 지역(부분일치)
      * recruiting: 모집중만(true/false)
-     * openOn: 해당 날짜에 접수중인지( start <= openOn <= end )
+     * keyword/q: 검색어(부분일치). 둘 다 오면 q 우선.
+     * 빈 문자열이면 전체 페이징 반환은 Service에서 처리(권장).
      */
-    // IncubationCenterController.java
-
     @GetMapping("/search")
-    public org.springframework.data.domain.Page<IncubationCenterResponse> search(
-            @RequestParam("keyword") String keyword,
+    public Page<IncubationCenterResponse> search(
+            @RequestParam(value = "q", required = false, defaultValue = "") String q,
+            @RequestParam(value = "keyword", required = false, defaultValue = "") String keyword,
             @RequestParam(required = false) Boolean recruiting,
-            @org.springframework.data.web.PageableDefault(
-                    size = 20,
-                    sort = "receiptEndDate",
-                    direction = org.springframework.data.domain.Sort.Direction.ASC
-            ) org.springframework.data.domain.Pageable pageable
+            @PageableDefault(size = 20, sort = "receiptEndDate", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        if (keyword == null || keyword.isBlank()) {
-            throw new IllegalArgumentException("keyword는 필수입니다.");
-            // 또는 return Page.empty(pageable);
-        }
-        return incubationCenterService.searchKeyword(keyword, recruiting, pageable);
+        final String k = StringUtils.hasText(q) ? q : keyword; // q 우선
+        // ★ 더 이상 예외 던지지 않음. k가 빈 값이어도 서비스에서 전체 반환하도록 위임.
+        return incubationCenterService.searchKeyword(k, recruiting, pageable);
     }
-
-
 
     // 엔드포인트 추가
     @PostMapping("/sync")
@@ -71,7 +68,6 @@ public class IncubationCenterController {
         int n = kStartupImportService.sync(region, onlyOpen, endDateGte);
         return "synced: " + n;
     }
-
 
     @PostMapping("/sync-batch")
     public String syncBatch(
@@ -91,5 +87,11 @@ public class IncubationCenterController {
 
         int n = kStartupImportService.syncLimited(regionList, onlyOpen, daysAhead, requireDates, integratedOnly, max);
         return "synced: " + n;
+    }
+
+    /** 단건 조회 */
+    @GetMapping("/{id}")
+    public IncubationCenterResponse getOne(@PathVariable Long id) {
+        return incubationCenterService.getOne(id);
     }
 }
