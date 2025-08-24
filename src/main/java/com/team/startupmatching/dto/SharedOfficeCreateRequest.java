@@ -17,6 +17,9 @@ public class SharedOfficeCreateRequest {
     @NotNull private Long maxCount;
     private String description;
 
+    @NotNull
+    private Long feeMonthly;   // ✅ 월 요금 추가 (숫자, 필수값)
+
     // 호스트 정보
     @NotBlank private String hostRepresentativeName;    // 대표자명
 

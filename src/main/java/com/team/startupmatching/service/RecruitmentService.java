@@ -2,12 +2,13 @@ package com.team.startupmatching.service;
 
 import com.team.startupmatching.dto.RecruitmentRequest;
 import com.team.startupmatching.dto.RecruitmentResponse;
-import com.team.startupmatching.dto.IncubationCenterCreateRequest;
+import com.team.startupmatching.dto.RecruitmentUpdateRequest;
 import com.team.startupmatching.entity.Recruitment;
 import com.team.startupmatching.entity.User;
 import com.team.startupmatching.exception.RecruitmentException;
 import com.team.startupmatching.repository.RecruitmentRepository;
 import com.team.startupmatching.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,7 +28,9 @@ public class RecruitmentService {
     private final RecruitmentRepository recruitmentRepository;
     private final UserRepository userRepository;
 
-    /** 모집글 등록 */
+    /**
+     * 모집글 등록
+     */
     @Transactional
     public RecruitmentResponse createRecruitment(RecruitmentRequest request) {
         if (request.getTitle() == null || request.getTitle().isBlank()) {
@@ -54,45 +57,24 @@ public class RecruitmentService {
                 .build();
 
         Recruitment saved = recruitmentRepository.save(recruitment);
-
-        return RecruitmentResponse.builder()
-                .id(saved.getId())
-                .title(saved.getTitle())
-                .location(saved.getLocation())
-                .position(saved.getPosition())
-                .skills(saved.getSkills())
-                .career(saved.getCareer())
-                .recruitCount(saved.getRecruitCount())
-                .content(saved.getContent())
-                .isClosed(saved.getIsClosed())
-                .createdAt(saved.getCreatedAt())
-                .userId(saved.getUser().getId())
-                .build();
+        return RecruitmentResponse.from(saved);
     }
 
-    /** 전체 목록 (정렬: 최신순) */
+    /**
+     * 전체 목록 (정렬: 최신순)
+     */
     @Transactional(readOnly = true)
     public List<RecruitmentResponse> listAll() {
         return recruitmentRepository
                 .findAll(Sort.by(Sort.Direction.DESC, "createdAt", "id"))
                 .stream()
-                .map(r -> RecruitmentResponse.builder()
-                        .id(r.getId())
-                        .title(r.getTitle())
-                        .location(r.getLocation())
-                        .position(r.getPosition())
-                        .skills(r.getSkills())
-                        .career(r.getCareer())
-                        .recruitCount(r.getRecruitCount())
-                        .content(r.getContent())
-                        .isClosed(r.getIsClosed())
-                        .createdAt(r.getCreatedAt())
-                        .userId(r.getUser() != null ? r.getUser().getId() : null)
-                        .build())
+                .map(RecruitmentResponse::from)
                 .toList();
     }
 
-    /** 검색: 키워드 배열(AND) 또는 단일 문자열(공백 split AND) */
+    /**
+     * 검색: 키워드 배열(AND) 또는 단일 문자열(공백 split AND)
+     */
     @Transactional(readOnly = true)
     public List<RecruitmentResponse> search(String keyword, List<String> keywords) {
         Specification<Recruitment> spec = (root, query, cb) -> cb.conjunction();
@@ -110,25 +92,97 @@ public class RecruitmentService {
         return recruitmentRepository
                 .findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt", "id"))
                 .stream()
-                .map(r -> RecruitmentResponse.builder()
-                        .id(r.getId())
-                        .title(r.getTitle())
-                        .location(r.getLocation())
-                        .position(r.getPosition())
-                        .skills(r.getSkills())
-                        .career(r.getCareer())
-                        .recruitCount(r.getRecruitCount())
-                        .content(r.getContent())
-                        .isClosed(r.getIsClosed())
-                        .createdAt(r.getCreatedAt())
-                        .userId(r.getUser() != null ? r.getUser().getId() : null)
-                        .build())
+                .map(RecruitmentResponse::from)
                 .toList();
     }
 
-    /** (호환용, 필요 없으면 삭제 가능) */
+    /** (호환용) */
     @Transactional(readOnly = true)
     public List<RecruitmentResponse> search(String keyword) {
         return search(keyword, null);
+    }
+
+    @Transactional(readOnly = true)
+    public RecruitmentResponse getOne(Long id) {
+        Recruitment r = recruitmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Recruitment not found: " + id));
+        return RecruitmentResponse.from(r);
+    }
+
+    /* =========================
+     *       UPDATE / DELETE
+     * ========================= */
+
+    /**
+     * 전체 치환(모든 필드 필수) — PUT
+     * - 제목/작성자 등 필수값 검증
+     * - createdAt은 유지
+     */
+    @Transactional
+    public RecruitmentResponse updateReplace(Long id, RecruitmentRequest req) {
+        Recruitment e = recruitmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Recruitment not found: " + id));
+
+        if (req.getTitle() == null || req.getTitle().isBlank()) {
+            throw new RecruitmentException("모집글 제목은 필수입니다.", "RECRUITMENT_TITLE_MISSING");
+        }
+        if (req.getUserId() == null) {
+            throw new RecruitmentException("작성자(userId)는 필수입니다.", "RECRUITMENT_USER_MISSING");
+        }
+
+        User writer = userRepository.findById(req.getUserId())
+                .orElseThrow(() -> new RecruitmentException("존재하지 않는 사용자입니다.", "USER_NOT_FOUND"));
+
+        // 전체 치환 (createdAt은 유지)
+        e.setTitle(req.getTitle());
+        e.setLocation(req.getLocation());
+        e.setPosition(req.getPosition());
+        e.setSkills(req.getSkills());
+        e.setCareer(req.getCareer());
+        e.setRecruitCount(req.getRecruitCount());
+        e.setContent(req.getContent());
+        e.setIsClosed(req.getIsClosed() != null ? req.getIsClosed() : Boolean.FALSE);
+        e.setUser(writer);
+
+        // Dirty checking으로 반영
+        return RecruitmentResponse.from(e);
+    }
+
+    /**
+     * 부분 수정 — PATCH
+     * - null이 아닌 필드만 반영
+     */
+    @Transactional
+    public RecruitmentResponse updatePartial(Long id, RecruitmentUpdateRequest req) {
+        Recruitment e = recruitmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Recruitment not found: " + id));
+
+        if (req.getTitle() != null) e.setTitle(req.getTitle());
+        if (req.getLocation() != null) e.setLocation(req.getLocation());
+        if (req.getPosition() != null) e.setPosition(req.getPosition());
+        if (req.getSkills() != null) e.setSkills(req.getSkills());
+        if (req.getCareer() != null) e.setCareer(req.getCareer());
+        if (req.getRecruitCount() != null) e.setRecruitCount(req.getRecruitCount());
+        if (req.getContent() != null) e.setContent(req.getContent());
+        if (req.getIsClosed() != null) e.setIsClosed(req.getIsClosed());
+
+        if (req.getUserId() != null) {
+            User writer = userRepository.findById(req.getUserId())
+                    .orElseThrow(() -> new RecruitmentException("존재하지 않는 사용자입니다.", "USER_NOT_FOUND"));
+            e.setUser(writer);
+        }
+
+        // Dirty checking으로 반영
+        return RecruitmentResponse.from(e);
+    }
+
+    /**
+     * 삭제 — DELETE
+     */
+    @Transactional
+    public void delete(Long id) {
+        Recruitment e = recruitmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Recruitment not found: " + id));
+        recruitmentRepository.delete(e);
     }
 }
