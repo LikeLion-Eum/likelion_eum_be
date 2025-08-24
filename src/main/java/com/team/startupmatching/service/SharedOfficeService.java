@@ -8,6 +8,7 @@ import com.team.startupmatching.entity.SharedOfficePhoto;
 import com.team.startupmatching.repository.SharedOfficePhotoRepository;
 import com.team.startupmatching.repository.SharedOfficeRepository;
 import com.team.startupmatching.support.PublicUrlBuilder;
+import com.team.startupmatching.support.LocationKeywordUtil; // 위치 키워드 확장 유틸
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -137,13 +138,34 @@ public class SharedOfficeService {
                 .build();
     }
 
-    // 지역 기반 추천
+    // ✅ 지역 기반 추천 (토큰 확장 + OR LIKE + 최대 3건) — 대표 이미지 포함
     @Transactional(readOnly = true)
     public List<SharedOfficeRecommendResponse> recommendByLocation(String location) {
-        List<SharedOffice> foundOffices =
-                sharedOfficeRepository.findByLocationContainingIgnoreCase(location);
-        return foundOffices.stream()
-                .map(SharedOfficeRecommendResponse::from)
+        if (location == null || location.isBlank()) {
+            return List.of();
+        }
+
+        // 1) "전남 나주시" → ["전남","전라남도","나주시","나주"] 등으로 확장
+        List<String> tokens = LocationKeywordUtil.buildKeywords(location);
+
+        // 2) OR LIKE 스펙
+        Specification<SharedOffice> spec = SharedOfficeSpecification.locationContainsAny(tokens);
+
+        // 3) 최대 3건 최신순
+        var page = sharedOfficeRepository.findAll(
+                spec,
+                PageRequest.of(0, 3, Sort.by(Sort.Direction.DESC, "id"))
+        );
+
+        // 4) DTO 변환(대표 이미지 포함)
+        return page.stream()
+                .map(so -> {
+                    String url = photoRepo
+                            .findFirstBySharedOfficeIdOrderByIsMainDescSeqAsc(so.getId())
+                            .map(p -> publicUrlBuilder.build(p.getStorageKey()))
+                            .orElse(null);
+                    return SharedOfficeRecommendResponse.from(so, url); // ✅ 여기!
+                })
                 .collect(Collectors.toList());
     }
 
@@ -157,7 +179,6 @@ public class SharedOfficeService {
         SharedOffice e = sharedOfficeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "SharedOffice not found: " + id));
 
-        // 전체 치환 (PUT) – 요청 필드 모두 필수라는 전제
         e.setName(req.getName());
         e.setDescription(req.getDescription());
         e.setRoomCount(req.getRoomCount());
@@ -165,15 +186,12 @@ public class SharedOfficeService {
         e.setLocation(req.getLocation());
         e.setMaxCount(req.getMaxCount());
         e.setFeeMonthly(req.getFeeMonthly());
-
         e.setHostRepresentativeName(req.getHostRepresentativeName());
         e.setBusinessRegistrationNumber(digitsOnly(req.getBusinessRegistrationNumber()));
         e.setHostContact(digitsOnly(req.getHostContact()));
 
-        // Dirty checking으로 업데이트 반영
-        return toResponse(e); // ← 요약 응답으로 맞춰줍니다.
+        return toResponse(e);
     }
-
 
     /** 부분 수정 — null 이 아닌 값만 반영 */
     @Transactional
@@ -214,20 +232,27 @@ public class SharedOfficeService {
         sharedOfficeRepository.delete(e);
     }
 
-    /* mapper 공통화 */
+    /* mapper 공통화 — 목록/검색 카드에서 대표 이미지가 필요 */
     private SharedOfficeResponse toResponse(SharedOffice so) {
-        return new SharedOfficeResponse(
-                so.getId(),
-                so.getName(),
-                so.getLocation(),
-                so.getSize(),
-                so.getMaxCount(),
-                so.getFeeMonthly(),
-                so.getDescription(),
-                so.getHostRepresentativeName(),
-                so.getBusinessRegistrationNumber(),
-                so.getHostContact()
-        );
+        String mainPhotoUrl = photoRepo
+                .findFirstBySharedOfficeIdOrderByIsMainDescSeqAsc(so.getId())
+                .map(p -> publicUrlBuilder.build(p.getStorageKey()))
+                .orElse(null);
+
+        // 빌더 있는 경우
+        return SharedOfficeResponse.builder()
+                .id(so.getId())
+                .name(so.getName())
+                .location(so.getLocation())
+                .size(so.getSize())
+                .maxCount(so.getMaxCount())
+                .feeMonthly(so.getFeeMonthly())
+                .description(so.getDescription())
+                .hostRepresentativeName(so.getHostRepresentativeName())
+                .businessRegistrationNumber(so.getBusinessRegistrationNumber())
+                .hostContact(so.getHostContact())
+                .mainPhotoUrl(mainPhotoUrl) // ✅ 핵심
+                .build();
     }
 
     /* helpers */

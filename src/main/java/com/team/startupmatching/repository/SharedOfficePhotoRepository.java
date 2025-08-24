@@ -25,4 +25,6 @@ public interface SharedOfficePhotoRepository extends JpaRepository<SharedOfficeP
 
     // (선택) alias — 필요 없으면 지워도 됨
     List<SharedOfficePhoto> findAllBySharedOfficeIdOrderBySeqAsc(Long sharedOfficeId);
+
+    Optional<SharedOfficePhoto> findFirstBySharedOfficeIdOrderByIsMainDescSeqAsc(Long sharedOfficeId);
 }
